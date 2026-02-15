@@ -66,9 +66,11 @@
 %token '*' 3
 %token '(' 4
 %token ')' 5
+%token NEG 6
 
 %left '+' '-'
 %left '*'
+%left NEG
 
 %%
 
@@ -77,6 +79,7 @@ Expr
   | Expr '+' Expr { t1 + t3 #}
   | Expr '-' Expr { t1 - t3 #}
   | Expr '*' Expr { t1 * t3 #}
+  | '-' Expr %prec NEG { -t2 #}
   | '(' Expr ')' { t2 #}"
 
 /*#let test-grammar-ast = "%start Expr
@@ -141,5 +144,5 @@ Expr
 }
 
 #test-parse(..test-lex("(1+2)*3-4*5"))
-
 #test-parse(..test-lex("(1+2)*(2-7*(3-1))*5+200"))
+#test-parse(..test-lex("3+-4*5"))

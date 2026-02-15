@@ -35,7 +35,7 @@ license:            MIT
 license-file:       LICENSE
 
 -- The package author(s).
-author:             void
+author:             Void
 
 -- An email address to which users can send suggestions, bug reports, and patches.
 maintainer:         .

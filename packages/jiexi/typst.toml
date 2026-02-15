@@ -4,10 +4,10 @@ version = "0.1.0"
 entrypoint = "lib.typ"
 authors = ["Void"]
 license = "MIT"
-description = "Parser generator for Typst, powered by Haskell and WASM."
+description = "Parser generator for Typst."
 
 # homepage = ""
 # repository = ""
 categories = ["utility"]
-keywords = ["parser", "parser generator", "wasm", "haskell"]
+keywords = ["parser", "parser generator"]
 exclude = ["examples"]
