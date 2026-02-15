@@ -138,8 +138,7 @@ Expr
 
 main :: IO ()
 main = do
-  testFile <- X.readFile "test.jiexi"
-  parsed <- parseJiexiFile testFile
+  parsed <- parseJiexiFile jiexiTest
   print parsed
   putStrLn $ replicate 60 '='
   print (normalizeJiexiFile parsed)
@@ -149,7 +148,7 @@ main = do
   putStrLn $ replicate 60 '='
   putStrLn $ prettyPrintGrid (happyGrammar context) (happyTable context)
   putStrLn $ replicate 60 '='
-  print =<< grammarToMetadata testFile
+  print =<< grammarToMetadata jiexiTest
 
 -- main1 :: IO ()
 -- main1 = do
