@@ -16,9 +16,9 @@ $idchar = [$alpha$digit\_]
 @separator = \%\%
 @tokenname = $alpha$idchar*|\'([^\']|\\\')*\'|\"([^\"]|\\\")*\"
 
-$not_hash = [^\#]
+@not_hash = [^\#]|\n
 $not_brace = [^\}]
-@codeblock = \{($not_hash|\#+$not_brace)*\#+\}
+@codeblock = \{(@not_hash|\#+$not_brace)*\#+\}
 
 tokens :-
   $white+ ;

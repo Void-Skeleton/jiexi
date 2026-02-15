@@ -145,7 +145,7 @@ jiexiInfoToCodeGenCtx info = let grammar = H.Grammar {
   startTokenName = H.MkName (indexByToken M.! startToken info)
 
   startProduction = H.Production (H.MkName 3) [startTokenName, coerce m] 
-    ("" :: Eliminator, [1, 2]) H.No
+    (" panic(\"start production should not be used\") " :: Eliminator, [1, 2]) H.No
 
   nameToProdsArray = A.listArray (4, n - 1) [
     [ H.Production 

@@ -1,0 +1,13 @@
+[package]
+name = "jiexi"
+version = "0.1.0"
+entrypoint = "lib.typ"
+authors = ["Void"]
+license = "MIT"
+description = "Parser generator for Typst, powered by Haskell and WASM."
+
+# homepage = ""
+# repository = ""
+categories = ["utility"]
+keywords = ["parser", "parser generator", "wasm", "haskell"]
+exclude = ["examples"]
