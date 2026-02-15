@@ -1,0 +1,20 @@
+%start Expr
+
+%token int 0
+%token '+' 1
+%token '-' 2
+%token '*' 3
+%token '(' 4
+%token ')' 5
+
+%left '+' '-'
+%left '*'
+
+%%
+
+Expr
+  : int { t1 #}
+  | Expr '+' Expr { t1 + t3 #}
+  | Expr '-' Expr { t1 - t3 #}
+  | Expr '*' Expr { t1 * t3 #}
+  | '(' Expr ')' { t2 #}
