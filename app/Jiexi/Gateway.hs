@@ -8,10 +8,7 @@ module Jiexi.Gateway(
   PluginFunc(..)
 ) where
 
--- import Codec.CBOR qualified as C
-import Codec.CBOR.Read qualified as C
-import Codec.CBOR.Term qualified as C
-import Codec.CBOR.Write qualified as C
+import Control.Exception
 import Control.Monad
 import Data.ByteString (ByteString)
 -- import Data.ByteString qualified as BS
@@ -22,12 +19,14 @@ import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Maybe
 import Data.Text (Text)
--- import Data.Text qualified as X
+import Data.Text qualified as X
 import Data.Text.Lazy qualified as LX
 import GHC.Float (float2Double)
 
+import Jiexi.CBOR qualified as C
 import Jiexi.Gateway.Types
 import Jiexi.Gateway.TH
+import Jiexi.TH
 
 typst2cbor :: TypstVal -> C.Term
 typst2cbor TypNone = C.TNull
@@ -77,10 +76,15 @@ cbor2Typst term = do
     C.TSimple _ -> Nothing
 
 encodeTypst :: (ToTypst a) => a -> ByteString
-encodeTypst = LBS.toStrict . BB.toLazyByteString . C.toBuilder . C.encodeTerm . typst2cbor . toTypst
+encodeTypst = C.encodeCbor . typst2cbor . toTypst
 
 decodeTypst :: (FromTypst a) => ByteString -> Maybe a
-decodeTypst = fromTypst <=< cbor2Typst <=< (\case (Left _) -> Nothing ; Right (_, term) -> Just term) . C.deserialiseFromBytes C.decodeTerm . LBS.fromStrict
+decodeTypst = fromTypst <=< cbor2Typst <$> decodeCborThrow
+  where
+  decodeCborThrow bs = case C.decodeCbor bs of
+    Left msg -> throw $ TypstException $ X.pack msg
+    Right term -> term
+
 
 $(deriveTuplesFromToTypst [2..16])
 

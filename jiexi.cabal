@@ -60,7 +60,11 @@ executable jiexi
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
 
-    c-sources:        cbits/typ_wrapper.c
+    include-dirs:
+        cbits
+
+    c-sources: 
+        cbits/typ_wrapper.c
 
     build-tool-depends:
         alex:alex >= 3.4.0.0, 
@@ -73,6 +77,7 @@ executable jiexi
     other-modules:
         GridPrinter, 
         PrettyTables, 
+        Jiexi.CBOR, 
         Jiexi.CodeGen, 
         Jiexi.CodeGen.Intermediary, 
         Jiexi.CodeGen.Metadata, 
@@ -103,13 +108,12 @@ executable jiexi
 
     -- Other library packages from which modules are imported.
     build-depends:
-        template-haskell ^>=2.23.0.0, 
-        base ^>=4.21.0.0, 
+        template-haskell >= 2.23.0.0, 
+        base >=4.21.0.0, 
         array, 
+        binary, 
         bytestring, 
-        cborg, 
         containers, 
-        string-interpolate, 
         text, 
         happy-lib, 
 

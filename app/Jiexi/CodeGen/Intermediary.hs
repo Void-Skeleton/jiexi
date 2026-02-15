@@ -82,14 +82,13 @@ normalizeJiexiFile (JiexiFile directives productions) = const JiexiInfo {
     | not (M.keysSet infoTerminalPriorities `S.isSubsetOf` terminalSet) = throw $ TypstException $ "Some token in precedence declarations is not a terminal: " <> X.pack (show (S.difference (M.keysSet infoTerminalPriorities) terminalSet))
     | not (M.keysSet infoRulesByName `S.isSubsetOf` nonterminalSet) = throw $ TypstException $ "Some production rule refers to a symbol that is not a non-terminal: " <> X.pack (show (S.difference (M.keysSet infoRulesByName) nonterminalSet))
     | otherwise = foldr seq () (sanityCheckRule <$> map snd (M.assocs infoRulesByName))
-
-    where
-    terminalSet = S.fromList (fst <$> toList infoTerminals)
-    nonterminalSet = S.fromList (toList infoNonterminals)
-    tokenSet = terminalSet `S.union` nonterminalSet
-    sanityCheckRule ruleSeq
-      | appearedTokens <- S.fromList (concatMap (\(BareRule toks _, _) -> toList toks) ruleSeq), not (appearedTokens `S.isSubsetOf` tokenSet) = throw $ TypstException $ "Some production rule refers to a symbol that is not a terminal or non-terminal: " <> X.pack (show (S.difference appearedTokens tokenSet))
-      | otherwise = ()
+    
+  terminalSet = S.fromList (fst <$> toList infoTerminals)
+  nonterminalSet = S.fromList (toList infoNonterminals)
+  tokenSet = terminalSet `S.union` nonterminalSet
+  sanityCheckRule ruleSeq
+    | appearedTokens <- S.fromList (concatMap (\(BareRule toks _, _) -> toList toks) ruleSeq), not (appearedTokens `S.isSubsetOf` tokenSet) = throw $ TypstException $ "Some production rule refers to a symbol that is not a terminal or non-terminal: " <> X.pack (show (S.difference appearedTokens tokenSet))
+    | otherwise = ()
 
 data CodeGenContext = CodeGenContext {
   jiexiInfo :: JiexiInfo, 
@@ -153,7 +152,8 @@ jiexiInfoToCodeGenCtx info = let grammar = H.Grammar {
       (coerce (indexByToken M.! tokenName)) 
       (coerce ((indexByToken M.!) <$> toList tokens))
       (elim, [1 .. Q.length tokens])
-      (fromMaybe H.No prioM)
+      -- (fromMaybe H.No prioM)
+      (fromMaybe (inducedPrio tokens) prioM) -- The prio/assoc of a production is by default that of its last terminal
     | (BareRule tokens elim, prioM) <- toList prods]
     | tokenName <- toList (nonterminalTokens info),
       let prods = rulesByName info M.! tokenName]
@@ -169,3 +169,15 @@ jiexiInfoToCodeGenCtx info = let grammar = H.Grammar {
     in let lengthScan = scanl (+) 0 (map length nameToProdsList)
     in A.listArray (4, n - 1) $ 
       zipWith (\start end -> (1 + start, 1 + end)) lengthScan (tail lengthScan)
+
+  terminalSet = S.fromList $ fst <$> toList (terminalTokens info)
+
+  inducedPrio :: Seq TokenName -> H.Priority
+  inducedPrio tokens = case lastTerminalM of
+    Nothing -> H.No
+    Just lastTerminal -> fromMaybe H.No (terminalPriorities info M.!? lastTerminal)
+    where
+    lastTerminalM = case Q.dropWhileR (not . (`S.member` terminalSet)) tokens of
+      Q.Empty -> Nothing
+      _ :|> x -> Just x
+  

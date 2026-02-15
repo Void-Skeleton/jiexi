@@ -12,6 +12,9 @@
 #include <HsFFI.h>
 
 #if defined(wasi_HOST_OS)
+// I leave this error here to see if GHC is loading this file when I want
+// #error 
+
 extern void _wasm_minimal_protocol_write_args_to_buffer(void *buf) __attribute__((
     import_module("typst_env"),
     import_name("wasm_minimal_protocol_write_args_to_buffer")));
@@ -38,5 +41,5 @@ int32_t hs_init_wrapped()
 #else
 void wasm_minimal_protocol_write_args_to_buffer(void *buf) {}
 
-void wasm_minimal_protocol_send_result_to_host(void *buf, int len) {}
+void wasm_minimal_protocol_send_result_to_host(void *buf, HsInt len) {}
 #endif

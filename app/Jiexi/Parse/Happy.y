@@ -56,7 +56,7 @@ Grammar:
 -}
 
 %tokentype { JiexiToken }
-%name happyParse File
+%name happyParseJiexi File
 %token startD { DirectiveT StartTD }
 %token tokenD { DirectiveT TokenTD }
 %token leftD { DirectiveT LeftTD }

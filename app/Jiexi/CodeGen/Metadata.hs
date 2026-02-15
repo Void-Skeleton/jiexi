@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PatternSynonyms #-}
 module Jiexi.CodeGen.Metadata(
   TableParseMetadata(TableParseMetadata), 
@@ -16,6 +17,8 @@ import Data.Maybe
 import Data.Sequence (Seq (..))
 import Data.Sequence qualified as Q
 import Data.Text (Text)
+import Data.Text qualified as X
+import GHC.Stack (HasCallStack)
 import Happy.Grammar qualified as H
 import Happy.Tabular qualified as H
 import Happy.Tabular.LALR qualified as H
@@ -26,7 +29,7 @@ import Jiexi.Parse
 import Jiexi.TH
 
 newtype TableParseMetadata = TableParseMetadataNT ([[Int]], [[Int]], [Int], [Int], [Text], [Int], Int)
-  deriving newtype (FromTypst, ToTypst)
+  deriving newtype (FromTypst, ToTypst, Show)
 
 {-# COMPLETE TableParseMetadata #-}
 pattern TableParseMetadata :: [[Int]] -> [[Int]] -> [Int] -> [Int] -> [Text] -> [Int] -> Int -> TableParseMetadata
@@ -52,14 +55,14 @@ The main tables participating in the parsing are:
 - Tag to token table: It is an array indexed by (tag) with values being token index represented by the tag. 
 -}
 
-generateMetadata :: CodeGenContext -> TableParseMetadata
+generateMetadata :: HasCallStack => CodeGenContext -> TableParseMetadata
 generateMetadata ctx = TableParseMetadata {
   shiftReduceTable = processHappySRTable (H.actionTable (happyTable ctx)), 
   gotoTable = processHappyGotoTable n m (H.gotoTable (happyTable ctx)), 
   prodArityTable = [length toks | H.Production _ toks (_, _) _ <- joinedProdsList], 
   prodTokenTable = [coerce target | H.Production target _ (_, _) _ <- joinedProdsList], 
   prodWorkerCodeTable = [elim | H.Production _ _ (elim, _) _ <- joinedProdsList], 
-  tagToTokenTable = undefined, 
+  tagToTokenTable = processTagToTokenTable (terminalTokens (jiexiInfo ctx)) (indexByTokenName ctx), 
   eofToken = m
 } where
   info = jiexiInfo ctx
@@ -79,23 +82,23 @@ encodeLRAction H.LR'Fail = 0
 encodeLRAction H.LR'MustFail = 0
 encodeLRAction (H.LR'Multiple _ action) = encodeLRAction action
 
-processHappySRTable :: H.ActionTable -> [[Int]]
+processHappySRTable :: HasCallStack => H.ActionTable -> [[Int]]
 processHappySRTable tab = [
-  [ encodeLRAction action
-  | action <- toListAssertStart (H.MkName 0) stateRow]
+  tableDummyValue : [ encodeLRAction action
+  | action <- toListAssertStart (H.MkName 1) stateRow]
   | stateRow <- toListAssertStart 0 tab]
 
 
-toListAssertStart :: A.Ix i => i -> Array i e -> [e]
+toListAssertStart :: (A.Ix i, Show i) => i -> Array i e -> [e]
 toListAssertStart requiredStart arr
   | (start, _) <- A.bounds arr, start == requiredStart = toList arr
-  | otherwise = throw $ TypstException "toListAssertStart: assertion failed"
+  | otherwise = throw $ TypstException $ "toListAssertStart: assertion failed, range = " <> X.pack (show $ A.bounds arr)
 
 encodeGoto :: H.Goto -> Int
 encodeGoto (H.Goto s) = s
 encodeGoto H.NoGoto = tableDummyValue
 
-processHappyGotoTable :: Int -> Int -> H.GotoTable -> [[Int]]
+processHappyGotoTable :: HasCallStack => Int -> Int -> H.GotoTable -> [[Int]]
 processHappyGotoTable n m tab = [
   [ if 4 <= t && t < n then encodeGoto (stateRow A.! coerce t) else tableDummyValue
   | t <- [0 .. m]]
